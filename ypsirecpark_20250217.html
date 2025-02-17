@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Display raster and vector tilesets with opacity controls</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
+#menu {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1;
+    background-color: white;
+    padding: 10px;
+    width: 250px;
+    transition: transform 0.3s ease;
+    transform: translateX(0); /* Menu initially visible */
+}
+
+#menu.closed {
+    transform: translateX(250px); /* Hide the menu by sliding it out */
+}
+
+.menu-item { margin-bottom: 10px; }
+
+/* Button for toggling the menu */
+#menuToggle {
+    position: absolute;
+    top: 10px;
+    left: -50px;
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+    width: 60px;  /* Double the original width */
+    height: 50px;  /* Double the original height */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;  /* Increase the font size for the three lines */
+}
+
+/* Style for the image in the menu */
+#menu img {
+    width: 100%;
+    height: auto;
+    margin-bottom: 10px; /* Space below the image */
+}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="menu">
+    <!-- Add the image at the top of the menu -->
+    <img src="https://github.com/AGgeoviz/AGgeoviz.github.io/blob/main/AG_horiz_green_2400.png?raw=true" alt="Menu Image">
+    <button id="menuToggle">≡</button>
+    <div class="menu-item">
+        Flow Accumulation: <br>
+        <input type="range" id="raster-opacity" min="0" max="100" value="100">
+    </div>
+    <div class="menu-item">
+        Stream Network: <br>
+        <input type="range" id="vector1-opacity" min="0" max="100" value="100">
+    </div>
+    <div class="menu-item">
+        Non-canopy Vegetation: <br>
+        <input type="range" id="vector2-opacity" min="0" max="100" value="100">
+    </div>
+    <div class="menu-item">
+        Tree Canopy: <br>
+        <input type="range" id="vector3-opacity" min="0" max="100" value="100">
+    </div>
+    <div class="menu-item">
+        Sinks: <br>
+        <input type="range" id="vector4-opacity" min="0" max="100" value="100">
+    </div>
+    <div class="menu-item">
+        Building Footprints: <br>
+        <input type="range" id="vector5-opacity" min="0" max="100" value="100">
+    </div>
+	<div class="menu-item">
+        Parcels: <br>
+        <input type="range" id="vector6-opacity" min="0" max="100" value="100">
+    </div>
+</div>
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYWRhcHRnZW8iLCJhIjoiY2xwdmIwMGlyMDNkZzJrcGsybXh1emFpMSJ9.qeCqoOvHTXJIKF4q80v4CA';
+    var map = new mapboxgl.Map({
+        container: 'map',
+        maxZoom: 20,
+        minZoom: 16,
+        zoom: 16,
+        center: [-83.62809, 42.23883],
+        style: 'mapbox://styles/mapbox/satellite-streets-v12'
+    });
+
+    map.on('load', function() {
+        // Add raster tileset source and layer
+        map.addSource('raster-tileset-source', {
+            'type': 'raster',
+            'url': 'mapbox://adaptgeo.1hzu2dzr'
+        });
+        map.addLayer({
+            'id': 'raster-tileset-layer',
+            'type': 'raster',
+            'source': 'raster-tileset-source'
+        });
+
+        // Add first vector tileset source and layer
+        map.addSource('vector1-tileset-source', {
+            'type': 'vector',
+            'url': 'mapbox://adaptgeo.7jpnc3nz'
+        });
+        map.addLayer({
+            'id': 'vector1-tileset-layer',
+            'type': 'line',
+            'source': 'vector1-tileset-source',
+            'source-layer': 'RecParkStreamNetworkShapefile-apoix4',
+            'paint': {
+                'line-color': '#0046ff',
+                'line-opacity': 1,
+				'line-width': 3
+            }
+        });
+
+        // Add second vector tileset source and layer
+        map.addSource('vector2-tileset-source', {
+            'type': 'vector',
+            'url': 'mapbox://adaptgeo.3423at3q' // Replace with actual vector tileset URL
+        });
+        map.addLayer({
+            'id': 'vector2-tileset-layer',
+            'type': 'fill',
+            'source': 'vector2-tileset-source',
+            'source-layer': 'VegNonCanopyShapefile-a71tzh', // Replace with actual source layer name
+            'paint': {
+                'fill-color': '#ffff00',
+                'fill-opacity': 1
+            }
+        });
+
+        // Add third vector tileset source and layer
+        map.addSource('vector3-tileset-source', {
+            'type': 'vector',
+            'url': 'mapbox://adaptgeo.1eo1di7r' // Replace with actual vector tileset URL
+        });
+        map.addLayer({
+            'id': 'vector3-tileset-layer',
+            'type': 'fill',
+            'source': 'vector3-tileset-source',
+            'source-layer': 'TreeCanopy_1124121551-70rgdp', // Replace with actual source layer name
+            'paint': {
+                'fill-color': '#008000',
+                'fill-opacity': 1
+            }
+        });
+
+        // Add fourth vector tileset source and layer
+        map.addSource('vector4-tileset-source', {
+            'type': 'vector',
+            'url': 'mapbox://adaptgeo.4swspk2e' // Replace with actual vector tileset URL
+        });
+        map.addLayer({
+            'id': 'vector4-tileset-layer',
+            'type': 'fill',
+            'source': 'vector4-tileset-source',
+            'source-layer': 'BufferedSinks_1124121551-87qd6g', // Replace with actual source layer name
+            'paint': {
+                'fill-color': '#903fff',
+                'fill-opacity': 1
+            }
+		});
+
+        // Add fifth vector tileset source and layer
+        map.addSource('vector5-tileset-source', {
+            'type': 'vector',
+            'url': 'mapbox://adaptgeo.2k9ulz2f' // Replace with actual vector tileset URL
+        });
+        map.addLayer({
+            'id': 'vector5-tileset-layer',
+            'type': 'fill',
+            'source': 'vector5-tileset-source',
+            'source-layer': 'RecParkContigBuildingFootprin-8mhtyc', // Replace with actual source layer name
+            'paint': {
+                'fill-color': '#a8a396',
+                'fill-opacity': 1
+            }
+        });
+
+		// Add sixth vector tileset source and layer
+		map.addSource('vector6-tileset-source', {
+			type: 'vector',
+			url: 'mapbox://adaptgeo.78dydxev'
+		});
+		map.addLayer({
+			'id': 'vector6-tileset-layer',
+			'type': 'fill', // Change this to 'line' or 'symbol' as needed
+			'source': 'vector6-tileset-source',
+			'source-layer': 'RecParkParcelsWithAddressCent-2kjubx',
+			'paint': {
+				'fill-color': '#facc71',
+				'fill-outline-color': '#000000', // This sets the border color
+				'fill-opacity': 0.6
+			}
+		});
+
+        // Raster layer opacity control
+        var rasterOpacity = document.getElementById('raster-opacity');
+        rasterOpacity.addEventListener('input', function(e) {
+            map.setPaintProperty('raster-tileset-layer', 'raster-opacity', parseInt(e.target.value, 10) / 100);
+        });
+
+        // First vector layer opacity control
+        var vector1Opacity = document.getElementById('vector1-opacity');
+        vector1Opacity.addEventListener('input', function(e) {
+            map.setPaintProperty('vector1-tileset-layer', 'line-opacity', parseInt(e.target.value, 10) / 100);
+        });
+
+        // Second vector layer opacity control
+        var vector2Opacity = document.getElementById('vector2-opacity');
+        vector2Opacity.addEventListener('input', function(e) {
+            map.setPaintProperty('vector2-tileset-layer', 'fill-opacity', parseInt(e.target.value, 10) / 100);
+        });
+
+        // Third vector layer opacity control
+        var vector3Opacity = document.getElementById('vector3-opacity');
+        vector3Opacity.addEventListener('input', function(e) {
+            map.setPaintProperty('vector3-tileset-layer', 'fill-opacity', parseInt(e.target.value, 10) / 100);
+        });
+
+        // Fourth vector layer opacity control
+        var vector4Opacity = document.getElementById('vector4-opacity');
+        vector4Opacity.addEventListener('input', function(e) {
+            map.setPaintProperty('vector4-tileset-layer', 'fill-opacity', parseInt(e.target.value, 10) / 100);
+        });
+
+        // Fifth vector layer opacity control
+        var vector5Opacity = document.getElementById('vector5-opacity');
+        vector5Opacity.addEventListener('input', function(e) {
+            map.setPaintProperty('vector5-tileset-layer', 'fill-opacity', parseInt(e.target.value, 10) / 100);
+        });
+
+        // Sixth vector layer opacity control
+        var vector6Opacity = document.getElementById('vector6-opacity');
+        vector6Opacity.addEventListener('input', function(e) {
+            map.setPaintProperty('vector6-tileset-layer', 'fill-opacity', parseInt(e.target.value, 10) / 100);
+        });
+
+        // Add toggle functionality for the menu
+        const menu = document.getElementById('menu');
+        const menuToggle = document.getElementById('menuToggle');
+        
+        menuToggle.addEventListener('click', function() {
+            menu.classList.toggle('closed');
+        });
+    });
+</script>
+</body>
+</html>
