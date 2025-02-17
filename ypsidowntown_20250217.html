@@ -1,1 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Display raster and vector tilesets with opacity controls</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
 
+#menu {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1;
+    background-color: white;
+    padding: 10px;
+    width: 250px;
+    transition: transform 0.3s ease;
+    transform: translateX(0); /* Menu initially visible */
+}
+
+#menu.closed {
+    transform: translateX(250px); /* Hide the menu by sliding it out */
+}
+
+.menu-item { margin-bottom: 10px; }
+
+/* Button for toggling the menu */
+#menuToggle {
+    position: absolute;
+    top: 10px;
+    left: -50px;
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+    width: 60px;  /* Double the original width */
+    height: 50px;  /* Double the original height */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;  /* Increase the font size for the three lines */
+}
+
+/* Style for the image in the menu */
+#menu img {
+    width: 100%;
+    height: auto;
+    margin-bottom: 10px; /* Space below the image */
+}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="menu">
+    <!-- Add the image at the top of the menu -->
+    <img src="https://github.com/AGgeoviz/AGgeoviz.github.io/blob/main/AG_horiz_green_2400.png?raw=true" alt="Menu Image">
+	<button id="menuToggle">≡</button>
+    <div class="menu-item">
+        Relative Land Surface Temperature: <br>
+        <input type="range" id="raster-opacity" min="0" max="100" value="100">
+    </div>
+    <div class="menu-item">
+        Non-canopy Vegetation: <br>
+        <input type="range" id="vector1-opacity" min="0" max="100" value="100">
+    </div>
+    <div class="menu-item">
+        Tree Canopy: <br>
+        <input type="range" id="vector2-opacity" min="0" max="100" value="100">
+    </div>
+    <div class="menu-item">
+        Building Footprints: <br>
+        <input type="range" id="vector3-opacity" min="0" max="100" value="100">
+    </div>
+    <div class="menu-item">
+        Potential Check Dams: <br>
+        <input type="range" id="vector4-opacity" min="0" max="100" value="100">
+    </div>
+    <div class="menu-item">
+        High Peak-Discharge Basin: <br>
+        <input type="range" id="vector8-opacity" min="0" max="100" value="100">
+    </div>
+    <div class="menu-item">
+        Parcels: <br>
+        <input type="range" id="vector9-opacity" min="0" max="100" value="100">
+    </div>
+</div>
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYWRhcHRnZW8iLCJhIjoiY2xwdmIwMGlyMDNkZzJrcGsybXh1emFpMSJ9.qeCqoOvHTXJIKF4q80v4CA';
+    var map = new mapboxgl.Map({
+        container: 'map',
+        maxZoom: 20,
+        minZoom: 16,
+        zoom: 16,
+        center: [-83.618813, 42.239132],
+        style: 'mapbox://styles/mapbox/satellite-streets-v12'
+    });
+
+    map.on('load', function() {
+        // Add raster tileset source and layer
+        map.addSource('raster-tileset-source', {
+            'type': 'raster',
+            'url': 'mapbox://adaptgeo.32fef3sw'
+        });
+        map.addLayer({
+            'id': 'raster-tileset-layer',
+            'type': 'raster',
+            'source': 'raster-tileset-source'
+        });
+
+        // Add first vector tileset source and layer
+        map.addSource('vector1-tileset-source', {
+            'type': 'vector',
+            'url': 'mapbox://adaptgeo.1946hgu2'
+        });
+        map.addLayer({
+            'id': 'vector1-tileset-layer',
+            'type': 'fill',
+            'source': 'vector1-tileset-source',
+            'source-layer': 'VegNonCanopy_0808130444-0iuc39',
+            'paint': {
+                'fill-color': '#ffff00',
+                'fill-opacity': 1
+            }
+        });
+
+        // Add second vector tileset source and layer
+        map.addSource('vector2-tileset-source', {
+            'type': 'vector',
+            'url': 'mapbox://adaptgeo.cpf99l33' // Replace with actual vector tileset URL
+        });
+        map.addLayer({
+            'id': 'vector2-tileset-layer',
+            'type': 'fill',
+            'source': 'vector2-tileset-source',
+            'source-layer': 'TreeCanopy_0808130444-a5bm9a', // Replace with actual source layer name
+            'paint': {
+                'fill-color': '#008000',
+                'fill-opacity': 1
+            }
+        });
+
+        // Add third vector tileset source and layer
+        map.addSource('vector3-tileset-source', {
+            'type': 'vector',
+            'url': 'mapbox://adaptgeo.ypsi_building_footprints' // Replace with actual vector tileset URL
+        });
+        map.addLayer({
+            'id': 'vector3-tileset-layer',
+            'type': 'fill',
+            'source': 'vector3-tileset-source',
+            'source-layer': 'Building_Footprints', // Replace with actual source layer name
+            'paint': {
+                'fill-color': '#a8a396',
+                'fill-opacity': 1
+            }
+        });
+
+        // Add fourth vector tileset source and layer
+        map.addSource('vector4-tileset-source', {
+            'type': 'vector',
+            'url': 'mapbox://adaptgeo.cphpu1rj' // Replace with actual vector tileset URL
+        });
+        map.addLayer({
+            'id': 'vector4-tileset-layer',
+            'type': 'fill',
+            'source': 'vector4-tileset-source',
+            'source-layer': 'PotentialCheckDamLocations_08-8fyyzu', // Replace with actual source layer name
+            'paint': {
+                'fill-color': '#5ccae8',
+                'fill-opacity': 1
+            }
+        });
+
+		// 5th, 6th, 7th vector tileset source and layer (parcel boundary lines) were removed, and it is not a good use of time to 
+		// re-number all the subsequent code
+		
+
+        // Add eighth vector tileset source and layer
+        map.addSource('vector8-tileset-source', {
+            'type': 'vector',
+            'url': 'mapbox://adaptgeo.66wrvweg' // Replace with actual vector tileset URL
+        });
+        map.addLayer({
+            'id': 'vector8-tileset-layer',
+            'type': 'fill',
+            'source': 'vector8-tileset-source',
+            'source-layer': 'AOIBasinWithColor_0808130444-3blccx', // Replace with actual source layer name
+            'paint': {
+                'fill-color': '#5ccae8',
+                'fill-opacity': 1
+            }
+        });
+		
+		// Add ninth vector tileset source and layer
+		map.addSource('vector9-tileset-source', {
+			type: 'vector',
+			url: 'mapbox://adaptgeo.YpsiParcelsAddressAPN'
+		});
+		map.addLayer({
+			'id': 'vector9-tileset-layer',
+			'type': 'fill', // Change this to 'line' or 'symbol' as needed
+			'source': 'vector9-tileset-source',
+			'source-layer': 'YpsiParcelsAddressAPN',
+			'paint': {
+				'fill-color': '#facc71',
+				'fill-outline-color': '#000000', // This sets the border color
+				'fill-opacity': 0.6
+			}
+		});
+
+        // Raster layer opacity control
+        var rasterOpacity = document.getElementById('raster-opacity');
+        rasterOpacity.addEventListener('input', function(e) {
+            map.setPaintProperty('raster-tileset-layer', 'raster-opacity', parseInt(e.target.value, 10) / 100);
+        });
+
+        // First vector layer opacity control
+        var vector1Opacity = document.getElementById('vector1-opacity');
+        vector1Opacity.addEventListener('input', function(e) {
+            map.setPaintProperty('vector1-tileset-layer', 'fill-opacity', parseInt(e.target.value, 10) / 100);
+        });
+
+        // Second vector layer opacity control
+        var vector2Opacity = document.getElementById('vector2-opacity');
+        vector2Opacity.addEventListener('input', function(e) {
+            map.setPaintProperty('vector2-tileset-layer', 'fill-opacity', parseInt(e.target.value, 10) / 100);
+        });
+
+        // Third vector layer opacity control
+        var vector3Opacity = document.getElementById('vector3-opacity');
+        vector3Opacity.addEventListener('input', function(e) {
+            map.setPaintProperty('vector3-tileset-layer', 'fill-opacity', parseInt(e.target.value, 10) / 100);
+        });
+
+        // Fourth vector layer opacity control
+        var vector4Opacity = document.getElementById('vector4-opacity');
+        vector4Opacity.addEventListener('input', function(e) {
+            map.setPaintProperty('vector4-tileset-layer', 'fill-opacity', parseInt(e.target.value, 10) / 100);
+        });
+
+        // Eighth vector layer opacity control
+        var vector8Opacity = document.getElementById('vector8-opacity');
+        vector8Opacity.addEventListener('input', function(e) {
+            map.setPaintProperty('vector8-tileset-layer', 'fill-opacity', parseInt(e.target.value, 10) / 100);
+        });
+
+        // Ninth vector layer opacity control
+        var vector9Opacity = document.getElementById('vector9-opacity');
+        vector9Opacity.addEventListener('input', function(e) {
+            map.setPaintProperty('vector9-tileset-layer', 'fill-opacity', parseInt(e.target.value, 10) / 100);
+        });
+
+        // Add toggle functionality for the menu
+        const menu = document.getElementById('menu');
+        const menuToggle = document.getElementById('menuToggle');
+
+        menuToggle.addEventListener('click', () => {
+            menu.classList.toggle('closed'); // Toggle the 'closed' class to slide the menu
+        });
+		
+		// Add a popup to the map but don't associate it with any specific layer yet
+		var popup = new mapboxgl.Popup({
+			closeButton: false
+		});
+		
+		// Add an event listener for when the user clicks on the map
+		map.on('click', function(e) {
+			// Query the 'vector9-tileset-layer' layer to get features at the click location
+			var features = map.queryRenderedFeatures(e.point, {
+				layers: ['vector9-tileset-layer']
+			});
+
+			// If there are features at the click location, show a popup
+			if (features.length) {
+				var feature = features[0];
+
+				// Set the popup location to the click location
+				popup.setLngLat(e.lngLat);
+
+				// Set the popup content to the 'description' property of the feature
+				//popup.setHTML(feature.properties.description);
+				// "address" below is the field name... can just do spatial join of address from building footprint layer to parcel layer
+				// In QGIS, Vector > Data Management Tools > Join Attributes by Location... first may have to convert building Footprints
+				// into centroid points in order to deal with footprints not entirely contained within parcel boundaries, then do 
+				// one-to-many spatial join
+				popup.setHTML('<h3>' + feature.properties.address + '</h3><p>' + feature.properties.apn + '</p>');
+
+
+				// Add the popup to the map
+				popup.addTo(map);
+			}
+		});
+});
+</script>
+</body>
+</html>
